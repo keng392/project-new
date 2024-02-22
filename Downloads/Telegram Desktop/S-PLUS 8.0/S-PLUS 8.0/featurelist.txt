@@ -1,0 +1,107 @@
+; Feature list for 'S-PLUS 8.0'
+;
+; Use this list with the property IFUL_CUSTOMFEATURELISTFILE or
+; refer to it in your automate.ini file
+; for unattended custom installs.
+; Use semi-colons as first char on a line
+; to use default installation setting for feature.
+; Use an asterisk '*' as first char on a line
+; to prevent installation of feature.
+
+Program Files
+Program Files\S Engine Files
+Program Files\GUI Program Files
+Program Files\GUI Default Files
+Program Files\GUI Resource Files
+Program Files\GUI User Interface Files
+Program Files\Program Shortcuts\GUI Shortcuts
+Program Files\Program Shortcuts\S Engine Shortcuts
+Program Files\Program Shortcuts\Utilities Shortcuts
+Program Files\Program Shortcuts\S-PLUS Workbench Shortcuts
+Program Files\Program Shortcuts\GUI Desktop Shortcut
+Program Files\FLEXnet license management
+Program Files\FLEXnet License Fulfillment
+Program Files\Console Program
+Program Files\Online Program Registration
+Program Files\Program Update Checker
+Program Files\BATCH wizard
+Program Files\S-PLUS Eclipse user interface
+Help Files\Release Notes
+Help Files\S-PLUS Tutorial
+Help Files\S Programmer's Guide
+Help Files\S-PLUS User's Guide
+Help Files\Guide To Statistics
+Help Files\LME SAS Guide
+Help Files\GUI Help
+Help Files\S Language Reference
+Help Files\ConnectC++ Class Library Help
+Help Files\Automation Object Help
+Help Files\Help File Building Tools
+Help Files\Installation and Administration Guide
+Help Files\Big Data User's Guide
+Help Files\Guide to S-PLUS Packages
+Help Files\S-PLUS Function Guide
+Help Files\Workbench User's Guide
+Help Files\Guide to Graphics
+Libraries\Supported Libraries\nlme3 Library
+Libraries\Supported Libraries\winspj Library
+Libraries\Supported Libraries\winjava Library
+Libraries\Supported Libraries\bigdata Library
+Libraries\Supported Libraries\Libraries README
+Libraries\Supported Libraries\Correlated Data Library
+Libraries\Supported Libraries\financedb Library
+Libraries\Supported Libraries\Library SVM
+Libraries\Supported Libraries\Library arbor
+Libraries\Supported Libraries\pkgutils Library
+Libraries\Additional Libraries\chron Library
+Libraries\Additional Libraries\example5 Library
+Libraries\Additional Libraries\examples Library
+Libraries\Additional Libraries\maps Library
+Libraries\Additional Libraries\maps Library World Database
+Libraries\Additional Libraries\missing Library
+Libraries\Additional Libraries\nlme2 Library
+Libraries\Additional Libraries\Robust Library
+Libraries\Additional Libraries\dox Library
+Libraries\Additional Libraries\XML library
+Libraries\Additional Libraries\SPXML library
+Libraries\Unsupported Libraries\Class Library
+Libraries\Unsupported Libraries\Design Library
+Libraries\Unsupported Libraries\hmisc Library
+Libraries\Unsupported Libraries\MASS Library
+Libraries\Unsupported Libraries\Nnet Library
+Libraries\Unsupported Libraries\Spatial Library
+Development Support Files
+Development Support Files\Header and Library Files
+Development Support Files\ConnectC++ Classes
+Development Support Files\Connect C++ Header and Library Files
+Development Support Files\Visual Studio Wizards
+Example Files
+Example Files\Automation Examples\Visual Basic Automation Examples
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 display dialog sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 choose plot sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 create plot sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 GraphSheet pages sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 mixed data.frame sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 object hierarchy sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 embedded GraphSheet sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 run function sample
+Example Files\Automation Examples\Visual Basic Automation Examples\VB 6.0 Automation Client sample
+Example Files\Automation Examples\Visual C++ Automation Examples\VC++ 6.0 ActiveX control samples
+Example Files\Automation Examples\Visual C++ Automation Examples\VC++ 6.0 syntax sending sample
+Example Files\Automation Examples\Visual C++ Automation Examples\VC++ 6.0 embedded GraphSheet sample
+Example Files\Automation Examples\Visual Basic for Applications automation examples\Excel automation samples
+Example Files\Automation Examples\S syntax client automation samples
+Example Files\ConnectC++ .Call Samples
+Example Files\C++ Client Samples
+Example Files\DDE samples\Excel DDE client example
+Example Files\DDE samples\Excel 4.x DDE macro sheets
+Example Files\DDE samples\VB 6.0 basic client sample
+Example Files\Sample documents
+Example Files\LastAppStarted example code
+Example Files\Sample building batch files
+Example Files\User-defined dialog samples
+Example Files\Big Data Examples
+Example Files\Graphics examples
+Add-in for Excel
+Add-in for SPSS
+PowerPoint Presentation Wizard

@@ -1,0 +1,147 @@
+;=========================================================================
+; Find / Replace PROCEDURE
+;=========================================================================
+FindReplace PROC hdlg:DWORD, wmsg, wparam, lparam
+
+      .if wmsg == WM_INITDIALOG              ; If message is INITDIALOG then
+            mov     eax, hdlg
+            mov     hFRDlg, eax
+         INVOKE     GetDlgItem, hdlg, 101    ; Get handle of edit box
+           push     eax                      ; Save handle of edit1
+         INVOKE     SetFocus, eax            ; Set focus to this field
+            pop     eax
+         INVOKE     SendMessage, eax, EM_LIMITTEXT, 100, 0 ; Limit text size
+         INVOKE     GetDlgItem, hdlg, 102
+         INVOKE     SendMessage, eax, EM_LIMITTEXT, 100, 0 ; Limit text size
+         INVOKE     lstrlen, addr szFind
+         .if eax == 1 && szFind == ' '
+               mov     szFind, 0
+         .endif
+         INVOKE     SetDlgItemText, hdlg, 101, addr szFind
+         INVOKE     SetDlgItemText, hdlg, 102, addr szRep
+         INVOKE     GetDlgItem, hdlg, 302    ; Get search down check
+         INVOKE     SendMessage, eax, BM_SETCHECK, BST_CHECKED, 0 ; Sets find down to checked
+         INVOKE     SendMessage, hREdit, EM_EXGETSEL, 0, addr ft.chrgText
+            jmp     FRDone
+
+      .elseif wmsg == WM_COMMAND
+         .if wparam == 401 || wparam == 402 || wparam == 403 ; Find - Replace - ReplaceAll
+               jmp     FRText
+         .elseif wparam == IDCANCEL
+               jmp     CloseIt
+         .endif
+      .endif
+         jmp     FRDone
+
+FRText:
+         and     FRFlags, 0
+      INVOKE     SendMessage, hREdit, EM_EXGETSEL, 0, addr ft.chrgText
+      INVOKE     GetDlgItemText, hdlg, 101, addr szFind, 100
+        push     ft.chrgText.cpMin
+         pop     ft.chrg.cpMin
+         mov     ft.chrg.cpMax, -1
+         lea     eax, offset szFind
+         mov     ft.lpstrText, eax
+
+      .if wparam != 401                   ; Find button
+         INVOKE      GetDlgItemText, hdlg, 102, addr szRep, 100
+      .endif
+      INVOKE     IsDlgButtonChecked, hdlg, 201  ; Whole word
+      .if eax
+             or     FRFlags, FR_WHOLEWORD
+      .endif
+      INVOKE     IsDlgButtonChecked, hdlg, 202  ; Match case
+      .if eax
+             or     FRFlags, FR_MATCHCASE
+      .endif
+      INVOKE     IsDlgButtonChecked, hdlg, 301  ; Up
+      .if eax
+            mov     Prev, 1
+            mov     ft.chrg.cpMax, 0
+      .endif
+      INVOKE     IsDlgButtonChecked, hdlg, 302  ; Down
+      .if eax
+            mov     Prev, 0
+             or     FRFlags, FR_DOWN
+      .endif
+      .if wparam == 401                  ; Find button
+         INVOKE     Find, hWnd, 0, FRFlags, ft.lpstrText, Prev
+      .endif
+
+Again:
+      .if wparam != 401                  ; Find button
+         INVOKE     SendMessage, hREdit, EM_REPLACESEL, TRUE, addr szRep
+            mov     eax, ft.chrgText.cpMin
+            mov     ft.chrgText.cpMax, eax
+         INVOKE     lstrlen, addr szRep
+            add     ft.chrgText.cpMax, eax
+         INVOKE     SendMessage, hREdit, EM_EXSETSEL, 0, addr ft.chrgText
+         .if Prev
+               sub     ft.chrg.cpMin, 1
+         .else
+               add     ft.chrg.cpMin, 1
+         .endif
+         INVOKE     Find, hWnd, 0, FRFlags, ft.lpstrText, Prev
+         .if eax != 1
+               jmp     FRDone
+         .endif 
+         .if wparam == 403
+               jmp     Again
+         .endif
+      .endif
+         jmp     FRDone
+
+CloseIt:
+      INVOKE     EndDialog, hdlg, wparam ; End the dialog with wparam as return
+         mov     eax, TRUE               ; Return
+         and     hFRDlg, 0
+         jmp     FRRet                   ; with TRUE
+FRDone:
+         mov     eax, FALSE              ; Return with FALSE
+FRRet:
+         ret                             ; Return
+FindReplace  ENDP
+
+;=========================================================================
+; FindProc returns TRUE or FALSE based on finding FText
+;=========================================================================
+Find    PROC     hwnd:DWORD, Next, Flags, FText, Up
+
+Loop1:
+      INVOKE     SendMessage, hREdit, EM_FINDTEXTEX, FRFlags, offset ft
+         cmp     eax, -1                 ; Nothing found?
+         jne     FoundIt
+      .if Up == 0
+         INVOKE     lstrcpyn, offset TopBot, offset Top, 6
+      .else
+         INVOKE     lstrcpyn, offset TopBot, offset Bot, 6
+      .endif
+      INVOKE     MessageBox, NULL, offset FindEnd, offset szFR, MB_YESNO or\
+                 MB_ICONQUESTION or MB_TASKMODAL
+         cmp     eax, IDNO
+          je     Find0
+      .if Up == 0
+         INVOKE     SendMessage, hREdit, EM_SETSEL, 0, 0
+            mov     ft.chrg.cpMin, 0
+            mov     ft.chrg.cpMax, -1
+      .else
+         INVOKE     SendMessage, hREdit, WM_GETTEXTLENGTH, 0, 0
+            mov     ft.chrg.cpMin, eax
+            mov     ft.chrg.cpMax, 0
+      .endif
+         jmp     Loop1
+
+FoundIt:
+      .if eax == ft.chrg.cpMin && eax != ft.chrg.cpMax && Up == 0
+            inc     ft.chrg.cpMin
+            jmp     Loop1
+      .endif
+
+      INVOKE     SendMessage, hREdit, EM_EXSETSEL, 0, addr ft.chrgText
+         mov     eax, TRUE
+         ret
+
+Find0:
+        mov     eax, FALSE
+        ret
+Find    ENDP

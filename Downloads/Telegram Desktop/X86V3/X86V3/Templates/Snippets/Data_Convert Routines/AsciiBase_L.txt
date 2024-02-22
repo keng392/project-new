@@ -1,0 +1,44 @@
+AsciiBase      PROTO :DWORD, :DWORD, :DWORD
+
+Num            dd  0
+szBuff         db  20 dup(?)
+
+;=========================================================================
+; Converts a Dec, Hex, Oct or Bin ascii string to a 32 bit num value.    *
+;=========================================================================
+;INVOKE     AsciiBase, addr szBuff, addr Num, 10
+AsciiBase PROC Input:DWORD, Output, Base
+          pushad
+          mov esi, Input
+          mov edi, Output 
+          and dword ptr[edi], 0
+          Invoke lstrlen, Input
+          xor ecx, ecx
+          .while (eax)
+               .if byte ptr[esi+ecx] > 60h
+                    sub byte ptr[esi+ecx], 57h
+               .elseif byte ptr[esi+ecx] > 40h
+                    sub byte ptr[esi+ecx], 37h
+               .else
+                    xor byte ptr[esi+ecx], 30h
+               .endif
+               dec eax
+               inc ecx
+          .endw
+          mov ebx, 1
+          mov esi, Input
+          add esi, ecx
+          dec esi
+          xor edx, edx
+          .while (ecx)
+               mov al, byte ptr[esi]      ; Extract byte for conversion
+               and eax, 000000ffh
+               imul eax, ebx
+               add dword ptr[edi], eax    ; Accumulate output
+               imul ebx, Base
+               dec esi
+               dec ecx 
+          .endw
+          popad
+          ret
+AsciiBase ENDP

@@ -1,0 +1,69 @@
+;Do not edit or modify this file!!!
+Easy Code
+Begin Window = wndChildB
+  AlignMode       = 0
+  AutoRedraw      = 1
+  BackColor       = 0x004080FF
+  Border          = 3
+  Caption         = 1
+  CenterWindow    = 3
+  ClientEdge      = 0
+  ClipChildren    = 1
+  ClipSiblings    = 1
+  ContextHelp     = 0
+  ControlMenu     = 1
+  CursorIcon      = [None]
+  CursorShape     = 0
+  DisableClose    = 0
+  DrawingStyle    = 0
+  DrawingWidth    = 1
+  Enabled         = 1
+  ExStyle         = 0x00040100
+  Font            = MS Sans Serif,8,400,0,0,0
+  ForeColor       = 0x80000012
+  Height          = 3120
+  IconBig         = [None]
+  IconSmall       = [None]
+  ImageType       = -1
+  KeepSize        = 0
+  Left            = 0
+  MaximizeBox     = 1
+  MDIChild        = 1
+  Menu            = 0
+  MinimizeBox     = 1
+  NormalStyle     = 0x56CF0000
+  Picture         = [None]
+  RightToLeft     = 0
+  ScaleMode       = 1
+  ScrollBars      = 0
+  ShowMode        = 0
+  Style           = 2
+  Text            =  Child B
+  TimerInterval   = 0
+  ToolWindow      = 0
+  Top             = 0
+  Visible         = 1
+  Width           = 4710
+End
+
+.Const
+
+.Data?
+
+.Data
+
+.Code
+
+wndChildBProcedure Proc Private hWnd:HWND, uMsg:ULONG, wParam:WPARAM, lParam:LPARAM
+	.If uMsg == WM_CREATE
+		
+		Return TRUE
+	.ElseIf uMsg == WM_CLOSE
+		Invoke IsModal, hWnd
+		.If Eax
+			Invoke EndModal, hWnd, IDCANCEL
+			Return TRUE
+		.EndIf
+	.Endif
+	Return FALSE
+wndChildBProcedure EndP

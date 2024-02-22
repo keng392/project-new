@@ -1,0 +1,29 @@
+;Title :  get the value of port 4
+; of Traffic Lights to ax
+#start=Traffic_Lights.exe# ;open device traffic lights
+
+org 100h
+.data
+
+.code
+MOV AX, 0FFFh ; Turn on all  ;ax=0fffh
+OUT 4, AX     ; traffic lights.
+in ax, 4      ;ax =
+;    FEDCBA9876543210 (location of bits)
+;ax =
+MOV AX,0861H  ; ax = 00001000 0110001
+OUT 4,AX
+;TEST
+MOV AX,0000011010011010b
+OUT 4, AX
+;write code to set bit0=1, bit5=1 ,bit8=1 and bitA=1 , otherwise is 0
+;write code to set Bit1=1,Bit4=1,Bit7=1,BitA=1 other off
+
+;write code to copy value from port4 to dx
+
+ret
+
+
+
+
+; [SOURCE]: C:\X86V3\emu8086\MySource\In.asm

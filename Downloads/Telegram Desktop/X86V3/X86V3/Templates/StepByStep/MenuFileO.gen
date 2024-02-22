@@ -1,0 +1,11 @@
+MainMenu  MENU DISCARDABLE
+BEGIN
+   POPUP "&File"
+   BEGIN
+      MENUITEM "&New",          IDM_NEW
+      MENUITEM "&Open",         IDM_OPEN
+      MENUITEM "&Save",         IDM_SAVE
+      MENUITEM SEPARATOR
+      MENUITEM "E&xit",         IDM_EXIT
+   END
+END

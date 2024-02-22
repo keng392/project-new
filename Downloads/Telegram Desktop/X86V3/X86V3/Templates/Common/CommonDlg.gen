@@ -1,0 +1,19 @@
+** Common Ctrl DlgBox Funct **
+ChooseColor
+ChooseFont
+FindReplace
+GetOpenFileName
+GetSaveFileName
+PageSetupDlg
+PrintDlg
+Working example of all the above
+** Common Ctrl Styles **
+** For Reference Only **
+CCS_ADJUSTABLE
+CCS_BOTTOM
+CCS_NODIVIDER
+CCS_NOHILITE
+CCS_NOMOVEY
+CCS_NOPARENTALIGN
+CCS_NORESIZE
+CCS_TOP

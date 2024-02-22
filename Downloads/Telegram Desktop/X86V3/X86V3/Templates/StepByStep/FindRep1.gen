@@ -1,0 +1,2 @@
+Find            PROTO  :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+FindReplace     PROTO  :DWORD, :DWORD, :DWORD, :DWORD

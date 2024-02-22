@@ -1,0 +1,4 @@
+Save screen resolution routines here for copying and pasting to your program.
+=============================================================================
+
+

@@ -1,0 +1,27 @@
+;Do not modify this file!!!
+Easy Code 1.04.0.0010
+Begin ECProject = Project1
+  EasyCodeProject=1
+  FileType=0
+  Processor=.486
+  Align=4
+  DebugInfo=1
+  AsmFiles=1
+  StaticLib=1
+  MLOptions=
+  LinkOptions=
+  MMXOptions=0
+  CommonControls=1
+  RichEdit=0
+  PackFile=1
+  Macros=0
+  ECMacros=1
+  Unicode=0
+  StartupWindow=Window1
+  Title=Easy Code visual project
+  Resources=Project1.ecr
+  Window=11.ecw
+  Include=comctl32.inc
+  Library=comctl32.lib
+  MiscFile=Manifest.xml
+End

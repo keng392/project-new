@@ -1,0 +1,2 @@
+ProcessMRUFiles PROTO  :DWORD, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+GetRegPath      PROTO  :DWORD, :DWORD

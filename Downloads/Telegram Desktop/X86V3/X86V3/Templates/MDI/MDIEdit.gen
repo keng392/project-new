@@ -1,0 +1,614 @@
+;***** [Place in the Resource file (.rc)] *****
+
+#include <\HutchDir\INCLUDE\RESOURCE.H>
+
+#define IDM_NEW                         701
+#define IDM_CLOSE                       702
+#define IDM_CLEAR                       703
+#define IDM_OPEN                        704
+#define IDM_SAVE                        705
+#define IDM_EXIT                        706
+#define IDM_TILEHORZ                    707
+#define IDM_TILEVERT                    708
+#define IDM_CASCADE                     709
+
+701       BITMAP  DISCARDABLE     "Res\\B01_New.bmp"
+702       BITMAP  DISCARDABLE     "Res\\B02_Open.bmp"
+703       BITMAP  DISCARDABLE     "Res\\B03_Save.bmp"
+
+MainMenu MENU DISCARDABLE
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM   "&New Window",     IDM_NEW
+        MENUITEM   "&Close Window",   IDM_CLOSE
+        MENUITEM   SEPARATOR
+        MENUITEM   "&Clear Window",   IDM_CLEAR
+        MENUITEM   "&Open File",      IDM_OPEN
+        MENUITEM   "&Save File",      IDM_SAVE
+        MENUITEM   SEPARATOR
+        MENUITEM   "E&xit",           IDM_EXIT
+    END
+    POPUP "&Window"    
+    BEGIN
+      MENUITEM   "Tile Horizontal",   IDM_TILEHORZ
+      MENUITEM   "Tile Vertical",     IDM_TILEVERT
+      MENUITEM   "Cascade",           IDM_CASCADE
+    END
+END
+
+
+
+;***** [Place in the Application file (.asm)] *****
+
+         title   xxxx - MDI Window(s) with RichEdit
+
+         .586
+         .model flat, stdcall
+         option casemap:none   ; Case sensitive
+
+;---------- [You might need to change the paths] ----------
+
+            include  \AsmEditDir\include\windows.inc
+            include  \HutchDir\include\user32.inc
+            include  \HutchDir\include\gdi32.inc
+            include  \HutchDir\include\kernel32.inc
+            include  \HutchDir\include\comdlg32.inc
+            include  \HutchDir\include\comctl32.inc
+
+   include  \AsmEditDir\include\DSPMACRO.asm
+
+         includelib  \HutchDir\lib\user32.lib
+         includelib  \HutchDir\lib\gdi32.lib
+         includelib  \HutchDir\lib\kernel32.lib
+         includelib  \HutchDir\lib\comdlg32.lib
+         includelib  \HutchDir\lib\comctl32.lib
+
+WinMain        proto :DWORD, :DWORD, :DWORD, :DWORD
+OpenFileA      proto :DWORD
+SaveFile       proto :DWORD
+
+TBSep    MACRO hTool
+           mov     tbb.iBitmap, 0
+           mov     tbb.idCommand, 0
+           mov     tbb.fsState, TBSTATE_ENABLED
+           mov     tbb.fsStyle, TBSTYLE_SEP
+        INVOKE     SendMessage, hTool, TB_ADDBUTTONS, 1, addr tbb
+          ENDM
+
+TBButt   MACRO hTool, BmpID, CmdID, Text
+           mov     tbb.iBitmap, BmpID    ; Button image number
+           mov     tbb.idCommand, CmdID  ; Command ID number
+           mov     tbb.fsState, TBSTATE_ENABLED
+           mov     tbb.fsStyle, TBSTYLE_BUTTON
+           mov     tbb.dwData, 0
+           mov     tbb.iString, Text
+        INVOKE     SendMessage, hTool, TB_ADDBUTTONS, 1, addr tbb
+          ENDM
+
+.const
+IDM_NEW        equ  701
+IDM_CLOSE      equ  702
+IDM_CLEAR      equ  703
+IDM_OPEN       equ  704
+IDM_SAVE       equ  705
+IDM_EXIT       equ  706
+IDM_TILEHORZ   equ  707
+IDM_TILEVERT   equ  708
+IDM_CASCADE    equ  709
+
+szOpenTitle    db  'Open File',0
+szSaveTitle    db  'Save File As',0
+MDIClientClass db  'MDICLIENT',0
+MDIFrameClass  db  'Win32asmMDIFrame',0
+MDIChildClass  db  'Win32asmMDIChild',0
+MDIChildTitle  db  'MDI RichEdit Child',0
+
+szError1       db  'The RICHED20.DLL was not found!',0
+szError2       db  'The file has been modified.',0Dh,0Ah
+               db  'Do you wish to save it?',0
+
+RichEdit       db  'RichEdit20A',0
+RichEdDLL      db  'RICHED20.DLL',0
+StatClass      db  'msctls_statusbar32',0
+ToolClass      db  'ToolbarWindow32',0
+
+MenuName       db  'MainMenu',0
+FontName       db  'Courier New',0
+
+szFilter       db  'All Files',0,'*.*',0,0
+
+.data
+ClassName      db  'xxxx',0
+AppName        db  'xxxx - MDI Window(s) with RichEdit',0
+szNULL         db  0
+
+.data?
+hInst          dd  ?
+CommandLine    dd  ?
+hREdDll        dd  ?
+MainExit       dd  ?
+hMenuM         dd  ?
+hWndClient     dd  ?
+hWndFrame      dd  ?
+hFont          dd  ?
+hWndStat       dd  ?
+hWndTool       dd  ?
+hImageList     dd  ?
+sbParts        dd  4   dup(?)
+
+PathName       db  256 dup(?)
+FileName       db  64  dup(?)
+
+mdicreate      MDICREATESTRUCT <>
+lf             LOGFONT         <>
+
+.code
+start:
+      INVOKE     GetModuleHandle, NULL
+         mov     hInst, eax
+      INVOKE     GetCommandLine
+         mov     CommandLine, eax
+
+        call     InitCommonControls          ; Initialize the common ctrl lib
+      INVOKE     LoadLibrary, addr RichEdDLL ; Load the Riched20.dll
+         mov     hREdDll, eax
+      .if !eax
+         INVOKE     MessageBox, NULL, addr szError1, addr AppName, MB_OK or MB_ICONERROR
+            jmp     NoGo
+      .endif
+
+      INVOKE     WinMain, hInst ,NULL, CommandLine, SW_SHOWDEFAULT
+         mov     MainExit, eax
+      INVOKE     FreeLibrary, hREdDll
+
+NoGo:
+      INVOKE     ExitProcess, MainExit
+
+;_________________________________________________________________________________________
+WinMain proc  uses ebx  hinst:DWORD, hPrevInst, CmdLine, CmdShow
+LOCAL    wc:WNDCLASSEX
+LOCAL    msg:MSG
+
+;---------- [Register the frame window class] ----------
+         mov     wc.cbSize, sizeof WNDCLASSEX
+         mov     wc.style, CS_HREDRAW or CS_VREDRAW
+         mov     wc.lpfnWndProc, offset WndProc
+         mov     wc.cbClsExtra, NULL
+         mov     wc.cbWndExtra, NULL
+        push     hInst
+         pop     wc.hInstance
+         mov     wc.hbrBackground, COLOR_BTNFACE+1
+         mov     wc.lpszMenuName, offset MenuName
+         mov     wc.lpszClassName, offset ClassName
+      INVOKE     LoadIcon ,NULL, IDI_APPLICATION
+         mov     wc.hIcon, eax
+         mov     wc.hIconSm, eax
+      INVOKE     LoadCursor, NULL, IDC_ARROW
+         mov     wc.hCursor, eax
+      INVOKE     RegisterClassEx, addr wc
+
+;---------- [Register the MDI child window class] ----------
+         mov     wc.lpfnWndProc, offset ChildProc
+         mov     wc.hbrBackground, COLOR_WINDOW+1
+         mov     wc.lpszClassName, offset MDIChildClass
+      INVOKE     RegisterClassEx, addr wc
+
+;---------- [Center and create the main window] ----------
+      INVOKE     GetSystemMetrics, SM_CXSCREEN
+         sub     eax, 350
+         shr     eax, 1
+        push     eax
+      INVOKE     GetSystemMetrics, SM_CYSCREEN
+         sub     eax, 250
+         shr     eax, 1
+         pop     ebx
+
+      INVOKE     CreateWindowEx, WS_EX_CLIENTEDGE, addr ClassName, addr AppName,\
+                 WS_OVERLAPPEDWINDOW or WS_CLIPCHILDREN,\
+                 ebx, eax, 350, 250, NULL, NULL, hInst, NULL
+         mov     hWndFrame, eax
+
+      INVOKE     ShowWindow, hWndFrame, SW_SHOWNORMAL
+      INVOKE     UpdateWindow, hWndFrame
+
+      .while TRUE
+         INVOKE     GetMessage, addr msg, NULL,0,0
+         .break .if (!eax)
+            INVOKE     TranslateMDISysAccel, hWndClient, addr msg
+         .if eax == 0
+            INVOKE     TranslateMessage, addr msg
+            INVOKE     DispatchMessage, addr msg
+         .endif
+      .endw
+
+         mov     eax, msg.wParam
+         ret
+WinMain endp
+
+;_________________________________________________________________________________________
+WndProc proc hWnd:DWORD, wMsg, wParam, lParam
+LOCAL    rect:RECT
+LOCAL    ClientStruct:CLIENTCREATESTRUCT
+LOCAL    tbb:TBBUTTON
+LOCAL    tbab:TBADDBITMAP
+LOCAL    hWndChild:DWORD, hEdit
+LOCAL    bSize:DWORD, hTbBmp, ID, Cnt
+
+      .if wMsg==WM_CREATE
+         INVOKE     lstrcpy, addr lf.lfFaceName, addr FontName
+            mov     lf.lfHeight, -12
+            mov     lf.lfWeight, 500
+         INVOKE     CreateFontIndirect, addr lf
+            mov     hFont, eax
+
+         INVOKE     GetMenu, hWnd
+            mov     hMenuM, eax
+         INVOKE     GetSubMenu, hMenuM, 1
+            mov     ClientStruct.hWindowMenu, eax
+            mov     ClientStruct.idFirstChild, 100
+         INVOKE     EnableMenuItem, hMenuM, IDM_CLOSE, MF_GRAYED
+
+;---------- [Create the status bar window] ----------
+         INVOKE     CreateWindowEx, 0, addr StatClass, 0,\
+                    WS_CHILD or WS_BORDER or WS_VISIBLE or SBS_SIZEGRIP,\
+                    0, 0, 0, 0, hWnd, 0, hInst, 0  
+         .if !eax
+;Do message
+               jmp     Ret0
+         .endif
+            mov     hWndStat, eax
+
+;---------- [Create the Toolbar Window] ----------
+         INVOKE     CreateWindowEx, 0, addr ToolClass, 0,
+                    WS_CHILD or WS_VISIBLE or TBSTYLE_TOOLTIPS or CCS_NOPARENTALIGN or\
+                    CCS_NORESIZE or CCS_ADJUSTABLE or TBSTYLE_FLAT or WS_BORDER,\
+                    0, -2, 1200, 26, hWnd, 0, hInst, 0
+         .if !eax
+;Do message
+               jmp     Ret0
+         .endif
+            mov     hWndTool, eax
+
+;---------- [Create the ImageList] ----------
+         INVOKE     ImageList_Create, 16, 16, ILC_COLOR32, 12, 0
+            mov     hImageList, eax
+
+;---------- [Load The Bitmaps] ----------
+            mov     ID, 701              ; Bitmap ID start address
+            mov     Cnt, 12              ; Number of bitmaps
+         .while (Cnt)
+            INVOKE     LoadImage, hInst, ID, IMAGE_BITMAP, 16, 16, LR_DEFAULTCOLOR
+               mov     hTbBmp, eax
+            INVOKE     ImageList_Add, hImageList, hTbBmp, NULL
+            INVOKE     DeleteObject, hTbBmp
+               inc     ID
+               dec     Cnt
+         .endw
+
+         INVOKE     SendMessage, hWndTool, TB_BUTTONSTRUCTSIZE, sizeof TBBUTTON, 0
+         INVOKE     SendMessage, hWndTool, TB_SETIMAGELIST, 0, hImageList
+
+;---------- [Size the Bitmap and Button] ----------
+            mov     ecx, 16              ; loword = bitmap Width
+            mov     eax, 16              ; hiword = bitmap Height
+            shl     eax, 16
+            mov     ax, cx
+            mov     bSize, eax
+         INVOKE     SendMessage, hWndTool, TB_SETBITMAPSIZE, 0, bSize
+         INVOKE     SendMessage, hWndTool, TB_SETBUTTONSIZE, 0, bSize
+
+;---------- [Create the Toolbar structures] ----------
+         TBButt     hWndTool, 0, 703, 0
+         TBButt     hWndTool, 1, 704, 0
+         TBButt     hWndTool, 2, 705, 0
+;          TBSep
+
+         INVOKE     CreateWindowEx, NULL, addr MDIClientClass, NULL,\
+                    WS_CHILD or WS_VISIBLE or WS_CLIPCHILDREN, CW_USEDEFAULT,\
+                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hWnd, NULL,\
+                    hInst, addr ClientStruct
+            mov     hWndClient, eax
+
+;---------- [Initialize the MDICREATESTRUCT] ----------
+            mov     mdicreate.szClass, offset MDIChildClass
+            mov     mdicreate.szTitle, offset MDIChildTitle
+           push     hInst
+            pop     mdicreate.hOwner
+            mov     mdicreate.x, CW_USEDEFAULT
+            mov     mdicreate.y, CW_USEDEFAULT
+            mov     mdicreate.lx, CW_USEDEFAULT
+            mov     mdicreate.ly, CW_USEDEFAULT
+
+
+      .elseif wMsg == WM_SIZE
+;---------- [Size the Statusbar Control] ----------
+            mov     eax, lParam          ; Get width
+            and     eax, 0ffffh          ; Lowword
+            shr     eax, 2               ; /4
+            mov     ecx, eax             ; Save factor
+            mov     sbParts, eax         ; Make part 1 1/4 the width
+            add     eax, ecx
+            mov     [sbParts+4], eax     ; and also part2, .. etc
+            add     eax, ecx
+            mov     [sbParts+8], eax
+            mov     [sbParts+12], -1     ; The last part extends to the end
+         INVOKE     SendMessage, hWndStat, SB_SETPARTS, 4, addr sbParts
+         INVOKE     MoveWindow, hWndStat, 0, 0, 0, 0, TRUE
+
+;---------- [Size the Toolbar Control] ----------
+         INVOKE     SendMessage, hWndTool, TB_AUTOSIZE, 0, 0
+
+;---------- [Size the Client Control] ----------
+            INVOKE     GetWindowRect, hWndTool, addr rect ; Rectangle of toolbar
+               mov     eax, rect.bottom
+               sub     eax, rect.top
+           push     eax                  ; Save height of toolbar
+
+            INVOKE     GetWindowRect, hWndStat, addr rect ; Rectangle of statusbar
+               mov     eax, rect.bottom
+               sub     eax, rect.top     ; eax = height of statusbar
+               pop     edx               ; edx = height of toolbar
+               mov     ebx, lParam       ; Width of new client area
+               and     ebx, 0ffffh       ; ebx = width
+               mov     ecx, lParam
+               shr     ecx, 16           ; Height of new client area
+               sub     ecx, eax          ; Edit window - height of statusbar
+               sub     ecx, edx          ; Edit window - height of toolbar
+               sub     edx, 2            ; For border
+               add     ecx, 2            ; For border
+               add     ecx, 2            ; For border
+         INVOKE     MoveWindow, hWndClient, 0, edx, ebx, ecx, TRUE
+
+
+      .elseif wMsg == WM_COMMAND
+            mov     eax, wParam
+           cwde                         ; Only low word contains command
+         .if eax == IDM_EXIT
+            INVOKE     SendMessage, hWnd, WM_CLOSE, 0, 0
+         .elseif eax == IDM_TILEHORZ
+            INVOKE     SendMessage, hWndClient, WM_MDITILE, MDITILE_HORIZONTAL, 0
+         .elseif eax == IDM_TILEVERT
+            INVOKE     SendMessage, hWndClient, WM_MDITILE, MDITILE_VERTICAL, 0
+         .elseif eax == IDM_CASCADE
+            INVOKE     SendMessage, hWndClient, WM_MDICASCADE, MDITILE_SKIPDISABLED, 0                 
+         .elseif eax == IDM_NEW
+            INVOKE     SendMessage, hWndClient, WM_MDICREATE, 0, addr mdicreate
+               mov     hWndChild, eax
+
+;            INVOKE     CreateMDIWindow, offset MDIChildClass, offset MDIChildTitle, 0,\
+;                       CW_USEDEFAULT, CW_USEDEFAULT, 200, 100, hWndClient, hInst, NULL
+;               mov     hwndChild1, eax
+
+            INVOKE     CreateWindowEx, 0, addr RichEdit, 0,\
+                       WS_CHILD or WS_VISIBLE or WS_BORDER or WS_HSCROLL or WS_VSCROLL or\
+                       ES_MULTILINE or ES_NOHIDESEL, CW_USEDEFAULT, CW_USEDEFAULT,\
+                       200, 100, hWndChild, 97, hInst, NULL
+               mov     hEdit, eax
+            INVOKE     SendMessage, hEdit, WM_SETFONT, hFont, 1
+
+            INVOKE     GetClientRect, hWndChild, addr rect
+            INVOKE     MoveWindow, hEdit, rect.left, rect.top, rect.right, rect.bottom, TRUE
+
+         .elseif eax == IDM_CLEAR
+            INVOKE     SendMessage, hWndClient, WM_MDIGETACTIVE, 0, 0
+               mov     ecx, eax
+              push     ecx
+            INVOKE     SendMessage, ecx, WM_SETTEXT, 0, addr MDIChildTitle
+               pop     ecx
+            INVOKE     GetWindow, ecx, GW_CHILD
+               mov     ecx, eax
+            INVOKE     SendMessage, ecx, WM_SETTEXT, 0, addr szNULL
+
+         .elseif eax == IDM_OPEN
+            INVOKE     SendMessage, hWndClient, WM_MDIGETACTIVE, 0, 0
+            INVOKE     OpenFileA, eax
+
+         .elseif eax == IDM_SAVE
+            INVOKE     SendMessage, hWndClient, WM_MDIGETACTIVE, 0, 0
+            INVOKE     SaveFile, eax
+
+         .elseif eax == IDM_CLOSE
+            INVOKE     SendMessage, hWndClient, WM_MDIGETACTIVE, 0, 0
+            INVOKE     SendMessage, eax, WM_CLOSE, 0, 0
+         .else
+            INVOKE     DefFrameProc, hWnd, hWndClient, wMsg, wParam, lParam        
+               ret
+         .endif
+
+      .elseif wMsg == WM_DESTROY
+         INVOKE     ImageList_Destroy, hImageList
+         INVOKE     PostQuitMessage, NULL
+      .else
+         INVOKE     DefFrameProc, hWnd, hWndClient, wMsg, wParam, lParam       
+            ret
+      .endif
+
+Ret0:
+         xor eax, eax
+         ret
+WndProc endp
+
+;_________________________________________________________________________________________
+ChildProc   proc   hChild:DWORD, wMsg, wParam, lParam
+LOCAL    rect:RECT
+LOCAL    hEdit:DWORD
+
+      .if wMsg == WM_MDIACTIVATE
+            mov     eax, lParam
+         .if eax == hChild
+            INVOKE     EnableMenuItem, hMenuM, IDM_CLOSE, MF_ENABLED
+         .else
+            INVOKE     EnableMenuItem, hMenuM, IDM_CLOSE, MF_GRAYED
+         .endif
+
+         INVOKE     GetSubMenu, hMenuM, 1
+            mov     edx, eax
+           push     edx
+;         INVOKE     SendMessage, hWndClient, WM_MDISETMENU, hMenuM, edx
+         INVOKE     GetWindow, hChild, GW_CHILD
+            mov     ecx, eax
+            pop     edx
+         INVOKE     SendMessage, ecx, WM_MDISETMENU, hMenuM, edx
+         INVOKE     DrawMenuBar, hWndFrame
+
+      .elseif wMsg == WM_SIZE
+         INVOKE     GetWindow, hChild, GW_CHILD
+            mov     hEdit, eax
+         INVOKE     GetClientRect, hChild, addr rect
+         INVOKE     MoveWindow, hEdit, rect.left, rect.top, rect.right, rect.bottom, TRUE
+            jmp     DefMDI
+
+      .elseif wMsg == WM_CLOSE
+         INVOKE     SendMessage, hWndClient, WM_MDIDESTROY, hChild, 0
+
+      .else
+
+DefMDI:
+         INVOKE     DefMDIChildProc, hChild, wMsg, wParam, lParam
+            ret
+      .endif
+         xor eax, eax
+         ret
+ChildProc endp
+
+;=========================================================================
+; Open file PROCEDURE
+;=========================================================================
+OpenFileA  PROC   hChild:DWORD
+LOCAL    ofn:OPENFILENAME
+LOCAL    EditS:EDITSTREAM
+LOCAL    hFile:DWORD, hREdit
+
+      INVOKE     GetWindow, hChild, GW_CHILD
+         mov     hREdit, eax
+      INVOKE     SendMessage, hREdit, EM_GETMODIFY, 0, 0
+      .if eax != 0
+         INVOKE     MessageBox, NULL, addr szError2, addr MDIChildTitle,
+                    MB_YESNOCANCEL or MB_ICONEXCLAMATION or MB_SYSTEMMODAL
+         .if eax == IDYES
+            INVOKE     SendMessage, hWndFrame, WM_COMMAND, IDM_SAVE, 0
+         .endif
+      .endif
+
+         mov     byte ptr PathName, 0
+         mov     ofn.lStructSize, sizeof ofn
+         mov     eax, hChild
+         mov     ofn.hwndOwner, eax
+         mov     eax, hInst
+         mov     ofn.hInstance, eax
+         mov     ofn.nFilterIndex, 0
+         mov     ofn.lpstrFile, offset PathName
+         mov     ofn.nMaxFile, lengthof PathName
+         mov     ofn.lpstrFilter, offset szFilter
+         mov     ofn.lpstrFileTitle, offset FileName
+         mov     ofn.nMaxFileTitle, lengthof FileName
+         mov     ofn.lpstrTitle, offset szOpenTitle
+         mov     ofn.Flags, OFN_PATHMUSTEXIST or OFN_FILEMUSTEXIST
+      INVOKE     GetOpenFileName, addr ofn
+      .if !eax                    ; Cancel'ed or error occurred
+            jmp     EndOpen
+      .endif
+
+      INVOKE     CreateFile, addr PathName,\
+                 GENERIC_READ or GENERIC_WRITE ,\
+                 FILE_SHARE_READ or FILE_SHARE_WRITE,\
+                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL
+         cmp     eax, -1            ; Error?
+         jne     opcrok
+
+operr:
+         jmp     EndOpen
+
+opcrok:
+         mov     hFile, eax
+         mov     EditS.dwCookie, eax
+         mov     EditS.dwError, 0
+         mov     EditS.pfnCallback, offset EditStreamRead
+
+      INVOKE     GetWindow, hChild, GW_CHILD
+         mov     hREdit, eax
+      INVOKE     SendMessage, hREdit, EM_STREAMIN, SF_TEXT, addr EditS
+      INVOKE     CloseHandle, hFile
+      INVOKE     SetWindowText, hChild, addr PathName
+      INVOKE     SendMessage,  hREdit, EM_SETMODIFY, FALSE, 0
+
+EndOpen:
+           ret
+OpenFileA  ENDP
+
+;=========================================================================
+; Edit Stream Read Callback PROCEDURE
+;=========================================================================
+EditStreamRead PROC dwCookie:DWORD, pbBuff, cb, pcb
+      INVOKE     ReadFile, dwCookie, pbBuff, cb, pcb, 0
+         mov     eax, 0          ; Return 0
+         ret
+EditStreamRead ENDP
+
+;=========================================================================
+; Save file PROCEDURE
+;=========================================================================
+SaveFile PROC   hChild:DWORD
+LOCAL    ofn:OPENFILENAME
+LOCAL    EditS:EDITSTREAM
+LOCAL    hFile:DWORD, hREdit
+
+      INVOKE     GetWindow, hChild, GW_CHILD
+         mov     hREdit, eax
+      INVOKE     SendMessage,  hREdit, WM_GETTEXTLENGTH, 0, 0
+      .if !eax
+            jmp     EndSave
+      .endif
+         mov     ofn.lStructSize, sizeof ofn
+         mov     eax, hChild
+         mov     ofn.hwndOwner, eax
+         mov     eax, hInst
+         mov     ofn.hInstance, eax
+         mov     ofn.nFilterIndex, 0
+         mov     ofn.lpstrFilter, offset szFilter
+         mov     ofn.lpstrFile, offset PathName
+         mov     ofn.nMaxFile, lengthof PathName
+         mov     ofn.lpstrInitialDir, 0
+         mov     ofn.lpstrTitle, offset szSaveTitle
+         mov     ofn.Flags, OFN_PATHMUSTEXIST or OFN_FILEMUSTEXIST
+      INVOKE     GetSaveFileName, addr ofn
+         cmp     eax, FALSE               ; Cancel'ed or error occurred
+          je     EndSave
+
+      INVOKE     CreateFile, addr PathName,\
+                 GENERIC_READ or GENERIC_WRITE ,\
+                 FILE_SHARE_READ or FILE_SHARE_WRITE,\
+                 NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
+         cmp     eax, -1                  ; Error?
+         jne     savcrok
+
+saverr:
+         jmp     EndSave
+
+savcrok:
+         mov     hFile, eax
+         mov     EditS.dwCookie, eax
+         mov     EditS.dwError, 0
+         mov     EditS.pfnCallback, offset EditStreamWrite
+
+      INVOKE     GetWindow, hChild, GW_CHILD
+         mov     hREdit, eax
+      INVOKE     SendMessage, hREdit, EM_STREAMOUT, SF_TEXT, addr EditS
+      INVOKE     CloseHandle, hFile
+      INVOKE     SendMessage,  hREdit, EM_SETMODIFY, FALSE, 0
+
+EndSave:
+         ret
+SaveFile ENDP
+
+;=========================================================================
+; Edit Stream Save Callback PROCEDURE
+;=========================================================================
+EditStreamWrite PROC uses ebx edi esi dwCookie:DWORD, pbBuff, cb, pcb
+      INVOKE     WriteFile, dwCookie, pbBuff, cb, pcb, 0
+         mov     eax, 0          ; File completely read
+         ret
+EditStreamWrite ENDP
+
+end start

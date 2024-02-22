@@ -1,0 +1,4 @@
+hREdDll        dd  ?
+hREdit         dd  ?
+hFont          dd  ?
+FontName       db  64  dup(?)

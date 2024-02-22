@@ -1,0 +1,34 @@
+Installation Notes for Modules with S-PLUS for Windows
+
+Installation
+============
+
+1. Insert the S-PLUS for Windows CD in your machine's disk drive.
+
+2. If your machine has CD-ROM Autoplay enabled, the S-PLUS Master Setup 
+   installation appears automatically.  Otherwise, open Microsoft Windows
+   Explorer and run the setup.exe program directly. It is a good idea to 
+   turn off other applications while installing modules, in particular
+   virus checkers and screen savers.
+
+3. Click the "Install Modules" button, then select the module to 
+   install. Follow the onscreen instructions.
+
+4. Install the license key. This process is described in the S-PLUS
+   Installation and Administration Guide.
+   
+
+Starting the Module
+===================
+
+Each module must be loaded before it can be used at the start
+of each S-PLUS session.  After S-PLUS has started, either:
+
+A. Select "File > Load Module" from the main menu, and choose the module
+from the list of available modules, or:
+
+B. In the Commands Window, type
+
+        module(modulename, first=T)
+
+   where 'modulename' is the name of the module.  

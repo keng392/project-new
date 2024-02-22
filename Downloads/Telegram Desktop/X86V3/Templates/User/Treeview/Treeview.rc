@@ -1,0 +1,17 @@
+ 
+#define  IDM_QUIT   1005
+#define  IDM_ABOUT  1006
+#define  MENUEX_1   1002   
+
+
+MENUEX_1 MENU
+BEGIN
+   POPUP "&File"
+      BEGIN
+         MENUITEM "E&xit",      IDM_QUIT
+      END
+   POPUP "&Help"
+      BEGIN
+         MENUITEM "&About\tF1", IDM_ABOUT
+      END
+END

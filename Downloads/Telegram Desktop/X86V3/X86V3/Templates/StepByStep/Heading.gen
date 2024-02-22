@@ -1,0 +1,5 @@
+         title   xxxx
+
+         .586
+         .model flat, stdcall
+         option casemap:none   ; Case sensitive

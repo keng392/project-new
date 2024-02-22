@@ -1,0 +1,11 @@
+; Feature list for 'S+SpatialStats'
+;
+; Use this list with the property IFUL_CUSTOMFEATURELISTFILE or
+; refer to it in your automate.ini file
+; for unattended custom installs.
+; Use semi-colons as first char on a line
+; to use default installation setting for feature.
+; Use an asterisk '*' as first char on a line
+; to prevent installation of feature.
+
+SpatialStats module for S-PLUS
